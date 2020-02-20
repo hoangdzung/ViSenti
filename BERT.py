@@ -22,6 +22,22 @@ else:
 
 MAX_LEN = 512
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--epochs', type=int, default=4)
+parser.add_argument('--batch_size', type=int, default=32)
+parser.add_argument('--maxlen', type=int, default=512)
+parser.add_argument('--seed', type=int, default=42)
+parser.add_argument('--lr', type=float, default=2e-5)
+
+args = parser.parse_args()
+
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed_all(args.seed)
+
+MAX_LEN = args.maxlen
+
 def get_dataloader(sentences, labels, tokenizer, batch_size):
     input_ids = []
 
@@ -49,6 +65,10 @@ def get_dataloader(sentences, labels, tokenizer, batch_size):
 
     return dataloader
 
+def flat_accuracy(preds, labels):
+    pred_flat = np.argmax(preds, axis=1).flatten()
+    labels_flat = labels.flatten()
+    return np.sum(pred_flat == labels_flat) / len(labels_flat)
 
 def get_baseline_acc(model, validation_dataloader, device):
     model.eval()
@@ -100,8 +120,8 @@ Y_train = Y[:-1000]
 X_test = X[-10000:]
 Y_test = Y[-10000:]
 
-train_dataloader = get_dataloader(X_train, Y_train, tokenizer, 32)
-test_dataloader = get_dataloader(X_test, Y_test, tokenizer, 32)
+train_dataloader = get_dataloader(X_train, Y_train, tokenizer, args.batch_size)
+test_dataloader = get_dataloader(X_test, Y_test, tokenizer, args.batch_size)
 
 optimizer = AdamW(model.parameters(),lr = args.lr)
 total_steps = len(train_dataloader) * args.epochs
@@ -118,7 +138,7 @@ else:
                                         # num_training_steps = total_steps)
                                         t_total = total_steps)
 
-for epoch_i in range(4):
+for epoch_i in range(args.epochs):
     total_loss = 0
     model.train()
         
