@@ -158,3 +158,6 @@ for epoch_i in range(4):
 
 print("")
 print("Training complete!")
+
+model = model.to('cpu')
+torch.save(model, 'bert.pt')
