@@ -40,12 +40,12 @@ MAX_LEN = args.maxlen
 
 def get_dataloader(sentences, labels, tokenizer, batch_size):
     input_ids = []
-
-    for sent in tqdm(sentences):
+    filtered_labels = []
+    for i, sent in tqdm(enumerate(sentences)):
         encoded_sent = tokenizer.encode(sent,add_special_tokens = True)
-        if len(encoded_sent) > MAX_LEN:
-            encoded_sent = encoded_sent[:MAX_LEN-1]+ encoded_sent[-2:-1]
-        input_ids.append(encoded_sent)
+        if len(encoded_sent) <= MAX_LEN:
+            input_ids.append(encoded_sent)
+            filtered_labels.append(labels[i])
 
     inputs = pad_sequences(input_ids, maxlen=MAX_LEN, dtype="long", 
                                     value=0, truncating="post", padding="post")                                                     
@@ -56,7 +56,7 @@ def get_dataloader(sentences, labels, tokenizer, batch_size):
         masks.append(att_mask)
 
     inputs = torch.tensor(inputs)
-    labels = torch.tensor(labels)
+    labels = torch.tensor(filtered_labels)
     masks = torch.tensor(masks)
 
     data = TensorDataset(inputs, masks, labels)
@@ -116,7 +116,7 @@ np.random.shuffle(index)
 X = X[index]
 Y = Y[index]
 X_train = X[:-10000]
-Y_train = Y[:-1000]
+Y_train = Y[:-10000]
 X_test = X[-10000:]
 Y_test = Y[-10000:]
 
