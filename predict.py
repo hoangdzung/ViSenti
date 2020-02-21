@@ -4,67 +4,71 @@ from scipy.special import softmax
 from preprocessing import * 
 from transformers import *
 from underthesea import sentiment
-try:
-    bert_model = torch.load('bert.pt')
-except:
-    pass
-tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', do_lower_case=True)
 
-try:
-    svm_model = pickle.load(open('svm.pkl', 'rb'))
-except:
-    pass
+MAX_LEN = 256 
 
-try:
-    xgboost_model = pickle.load(open('model_xgboost.pkl', 'rb'))
-except:
-    pass
-
-MAX_LEN = 256
-
-def bert_predict(sent):
+def bert_predict(sent, tokenizer=None):
     encoded_sent = tokenizer.encode(sent ,add_special_tokens = True)
     if len(encoded_sent) > MAX_LEN:
         encoded_sent = encoded_sent[:MAX_LEN-1]+ encoded_sent[-2:-1]                                                  
     outputs = bert_model(torch.tensor([encoded_sent]))
     return softmax(outputs[0].detach().cpu().numpy())
 
-sent = input("Nhap cau:")
-while(len(sent)>0):
+def predict(sent, bert_model=None, tokenizer=None,xgboost_model=None, svm_model=None):
+    """
+        0: NEG, 1: NEU, 2:POS
+
+    """
     try:
-        a = bert_predict(sent)[0]
-        #print("Bert:", np.argmax(a))
+        bert_out = bert_predict(sent, tokenizer)[0]
     except:
-        a = np.zeros((3,))
-    print("Bert:", a)
+        bert_out = np.zeros((3,))
+
     try:
-        b = svm_model.predict_proba([sent])[0]
-        #print("SVM:", np.argmax(b))
+        xgb_out = xgboost_model.predict_proba([sent])[0]
     except:
-        b = np.zeros((3,))
-    print("SVM:", b)
+        xgb_out = np.zeros((3,))
+
     try:
-        c = sentiment(sent)
-        print(c,type(c))
-        #print("Underthesea:",c)
+        svm_out = svm_model.predict_proba([sent])[0]
     except:
-        c = np.zeros((3,))
+        svm_out = np.zeros((3,))
+
+    try:
+        underthesea_out = sentiment(sent)
+    except:
+        underthesea_out = np.zeros((3,))
     else:
-        if c == 'negative':
-            c =  np.zeros((3,))
-            c[2] = 1
-        elif c == 'positive':
-            c =  np.zeros((3,))
-            c[0] = 1
-    print("Underthesea:", c)
+        if underthesea_out == 'negative':
+            underthesea_out =  np.array([1,0,0])
+        if underthesea_out == 'positive':
+            underthesea_out =  np.array([0,0,1])
+
+    final = (bert_out + xgb_out  +svm_out)*0.5 + underthesea_out
+
+    return np.argmax(final)
+
+
+if __name__ == '__main__':
     try:
-        d = xgboost_model.predict_proba([sent])
-        #print("XGBoost:", np.argmax(d))
+        bert_model = torch.load('bert.pt')
+        tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', do_lower_case=True)
     except:
-        d = np.zeros((3,))
-    print("XGBoost:",d)
-    final = (a + b  +d)*0.5+c
-    print("Combine:",final)
-    print(np.argmax(final))
-    
-    sent = input("Nhap cau:")
+        bert_model = None 
+        tokenizer = None
+
+    try:
+        svm_model = pickle.load(open('svm.pkl', 'rb'))
+    except:
+        svm_model = None
+
+    try:
+        xgboost_model = pickle.load(open('model_xgboost.pkl', 'rb'))
+    except:
+        xgboost_model = None
+
+    sent = input('Sentence: ')
+    while(len(sent) > 0):
+        print(predict(sent, bert_model=bert_model, tokenizer=tokenizer,xgboost_model=xgboost_model, svm_model=svm_model))
+        print("Enter to quit")
+        sent = input('Sentence: ')
