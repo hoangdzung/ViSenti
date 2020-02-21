@@ -41,13 +41,18 @@ def predict(sent, bert_model=None, tokenizer=None,xgboost_model=None, svm_model=
     else:
         if underthesea_out == 'negative':
             underthesea_out =  np.array([1,0,0])
-        if underthesea_out == 'positive':
+        elif underthesea_out == 'positive':
             underthesea_out =  np.array([0,0,1])
 
     final = (bert_out + xgb_out  +svm_out)*0.5 + underthesea_out
-
-    return np.argmax(final)
-
+    label = np.argmax(final)
+    assert label in range(3)
+    if label == 0:
+        return "negative"
+    elif label == 1:
+        return "neutral"
+    elif label == 2:
+        return "positive"
 
 if __name__ == '__main__':
     try:
