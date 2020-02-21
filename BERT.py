@@ -9,6 +9,7 @@ from tqdm import tqdm
 import random
 import transformers
 import pandas as pd
+from collections import Counter
 
 new_version = False
 if transformers.__version__ >= '2.2.2':
@@ -46,7 +47,7 @@ def get_dataloader(sentences, labels, tokenizer, batch_size):
         if len(encoded_sent) <= MAX_LEN:
             input_ids.append(encoded_sent)
             filtered_labels.append(labels[i])
-
+    print(Counter(filtered_labels))
     inputs = pad_sequences(input_ids, maxlen=MAX_LEN, dtype="long", 
                                     value=0, truncating="post", padding="post")                                                     
     masks = []
@@ -119,7 +120,7 @@ X_train = X[:-10000]
 Y_train = Y[:-10000]
 X_test = X[-10000:]
 Y_test = Y[-10000:]
-
+print(Counter(Y_train), Counter(Y_test))
 train_dataloader = get_dataloader(X_train, Y_train, tokenizer, args.batch_size)
 test_dataloader = get_dataloader(X_test, Y_test, tokenizer, args.batch_size)
 

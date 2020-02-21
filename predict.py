@@ -4,13 +4,23 @@ from scipy.special import softmax
 from preprocessing import * 
 from transformers import *
 from underthesea import sentiment
-
-bert_model = torch.load('../bert.pt')
+try:
+    bert_model = torch.load('bert.pt')
+except:
+    pass
 tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', do_lower_case=True)
 
-svm_model = pickle.load(open('../svm.pkl', 'rb'))
+try:
+    svm_model = pickle.load(open('svm.pkl', 'rb'))
+except:
+    pass
 
-MAX_LEN = 512
+try:
+    xgboost_model = pickle.load(open('model_xgboost.pkl', 'rb'))
+except:
+    pass
+
+MAX_LEN = 256
 
 def bert_predict(sent):
     encoded_sent = tokenizer.encode(sent ,add_special_tokens = True)
@@ -23,27 +33,38 @@ sent = input("Nhap cau:")
 while(len(sent)>0):
     try:
         a = bert_predict(sent)[0]
-        print(np.argmax(a))
+        #print("Bert:", np.argmax(a))
     except:
         a = np.zeros((3,))
+    print("Bert:", a)
     try:
         b = svm_model.predict_proba([sent])[0]
-        print(np.argmax(b))
+        #print("SVM:", np.argmax(b))
     except:
         b = np.zeros((3,))
+    print("SVM:", b)
     try:
         c = sentiment(sent)
-        print(c)
+        print(c,type(c))
+        #print("Underthesea:",c)
     except:
         c = np.zeros((3,))
     else:
-        c =  np.zeros((3,))
         if c == 'negative':
+            c =  np.zeros((3,))
             c[2] = 1
         elif c == 'positive':
+            c =  np.zeros((3,))
             c[0] = 1
-    final = a + b +c
-
+    print("Underthesea:", c)
+    try:
+        d = xgboost_model.predict_proba([sent])
+        #print("XGBoost:", np.argmax(d))
+    except:
+        d = np.zeros((3,))
+    print("XGBoost:",d)
+    final = (a + b  +d)*0.5+c
+    print("Combine:",final)
     print(np.argmax(final))
     
     sent = input("Nhap cau:")

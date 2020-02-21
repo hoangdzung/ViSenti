@@ -53,7 +53,7 @@ np.random.shuffle(index)
 X = X[index]
 Y = Y[index]
 X_train = X[:-10000]
-Y_train = Y[:-1000]
+Y_train = Y[:-10000]
 X_test = X[-10000:]
 Y_test = Y[-10000:]
 
