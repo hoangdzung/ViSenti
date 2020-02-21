@@ -10,6 +10,7 @@ import random
 import transformers
 import pandas as pd
 from collections import Counter
+from data import getdata
 
 new_version = False
 if transformers.__version__ >= '2.2.2':
@@ -108,19 +109,7 @@ else:
 tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', do_lower_case=True)
 model = BertForSequenceClassification.from_pretrained("bert-base-multilingual-uncased", num_labels=3)
 model.to(device)
-
-df = pd.read_csv('combine.csv')
-X = df['sentence'].values
-Y = df['label'].values
-index = np.arange(X.shape[0])
-np.random.shuffle(index)
-X = X[index]
-Y = Y[index]
-X_train = X[:-10000]
-Y_train = Y[:-10000]
-X_test = X[-10000:]
-Y_test = Y[-10000:]
-print(Counter(Y_train), Counter(Y_test))
+(X_train, Y_train), (X_test, Y_test) = getdata()
 train_dataloader = get_dataloader(X_train, Y_train, tokenizer, args.batch_size)
 test_dataloader = get_dataloader(X_test, Y_test, tokenizer, args.batch_size)
 

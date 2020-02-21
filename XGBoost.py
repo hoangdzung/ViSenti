@@ -8,6 +8,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 from xgboost.sklearn import XGBClassifier
 from collections import Counter
+from data import getdata
 
 import numpy as np
 import unidecode
@@ -45,17 +46,7 @@ pipeline = Pipeline(
     ]
 )
 
-df = pd.read_csv('combine.csv')
-X = df['sentence'].values
-Y = df['label'].values
-index = np.arange(X.shape[0])
-np.random.shuffle(index)
-X = X[index]
-Y = Y[index]
-X_train = X[:-10000]
-Y_train = Y[:-10000]
-X_test = X[-10000:]
-Y_test = Y[-10000:]
+(X_train, Y_train), (X_test, Y_test) = getdata()
 
 pipeline.fit(X_train, Y_train)
 

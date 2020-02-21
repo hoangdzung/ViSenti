@@ -19,6 +19,7 @@ import shutil
 import pickle 
 
 from preprocessing import * 
+from data import getdata
 
 estimator_C = 0.72
 lower_tfidf__ngram_range = (1, 4)
@@ -45,17 +46,7 @@ pipeline = Pipeline(
     ]
 )
 
-df = pd.read_csv('combine.csv')
-X = df['sentence'].values
-Y = df['label'].values
-index = np.arange(X.shape[0])
-np.random.shuffle(index)
-X = X[index]
-Y = Y[index]
-X_train = X[:-10000]
-Y_train = Y[:-10000]
-X_test = X[-10000:]
-Y_test = Y[-10000:]
+(X_train, Y_train), (X_test, Y_test) = getdata()
 
 pipeline.fit(X_train, Y_train)
 
