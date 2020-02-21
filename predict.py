@@ -7,20 +7,37 @@ from underthesea import sentiment
 
 MAX_LEN = 256 
 
-def bert_predict(sent, tokenizer=None):
+try:
+    bert_model = torch.load('bert.pt')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', do_lower_case=True)
+except:
+    bert_model = None 
+    tokenizer = None
+
+try:
+    svm_model = pickle.load(open('svm.pkl', 'rb'))
+except:
+    svm_model = None
+
+try:
+    xgboost_model = pickle.load(open('model_xgboost.pkl', 'rb'))
+except:
+    xgboost_model = None
+
+def bert_predict(sent):
     encoded_sent = tokenizer.encode(sent ,add_special_tokens = True)
     if len(encoded_sent) > MAX_LEN:
         encoded_sent = encoded_sent[:MAX_LEN-1]+ encoded_sent[-2:-1]                                                  
     outputs = bert_model(torch.tensor([encoded_sent]))
     return softmax(outputs[0].detach().cpu().numpy())
 
-def predict(sent, bert_model=None, tokenizer=None,xgboost_model=None, svm_model=None):
+def predict(sent):
     """
         0: NEG, 1: NEU, 2:POS
 
     """
     try:
-        bert_out = bert_predict(sent, tokenizer)[0]
+        bert_out = bert_predict(sent)[0]
     except:
         bert_out = np.zeros((3,))
 
@@ -55,25 +72,8 @@ def predict(sent, bert_model=None, tokenizer=None,xgboost_model=None, svm_model=
         return "positive"
 
 if __name__ == '__main__':
-    try:
-        bert_model = torch.load('bert.pt')
-        tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased', do_lower_case=True)
-    except:
-        bert_model = None 
-        tokenizer = None
-
-    try:
-        svm_model = pickle.load(open('svm.pkl', 'rb'))
-    except:
-        svm_model = None
-
-    try:
-        xgboost_model = pickle.load(open('model_xgboost.pkl', 'rb'))
-    except:
-        xgboost_model = None
-
     sent = input('Sentence: ')
     while(len(sent) > 0):
-        print(predict(sent, bert_model=bert_model, tokenizer=tokenizer,xgboost_model=xgboost_model, svm_model=svm_model))
+        print(predict(sent))
         print("Enter to quit")
         sent = input('Sentence: ')
